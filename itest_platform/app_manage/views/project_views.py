@@ -25,8 +25,40 @@ def project_add(request):
             describe = form.cleaned_data['describe']
             status = form.cleaned_data['status']
             Project.objects.create(name=name, describe=describe, status=status)
-            return HttpResponseRedirect('/manage/')
+            return HttpResponseRedirect('/project/')
     else:
         form = ProjectForm()
         username = request.session.get('user', '')
         return render(request, "project/add.html", {"user": username, "form": form})
+
+
+@login_required
+def project_edit(request, pid):
+    if request.method == 'POST':
+        form = ProjectForm(request.POST)
+        if form.is_valid():
+            project = Project.objects.get(id=pid)
+            project.name = form.cleaned_data['name']
+            project.describe = form.cleaned_data['describe']
+            project.status = form.cleaned_data['status']
+            project.save()
+            return HttpResponseRedirect('/project/')
+    else:
+        if pid:
+            try:
+                p = Project.objects.get(id=pid)
+                form = ProjectForm(instance=p)
+                return render(request, "project/edit.html", {"form": form, "pid": pid})
+            except Project.DoesNotExist:
+                return HttpResponseRedirect('/project/')
+
+
+@login_required
+def project_delete(request, pid):
+    try:
+        p = Project.objects.get(id=pid)
+        p.delete()
+    except Project.DoesNotExist:
+        return HttpResponseRedirect('/project/')
+    else:
+        return HttpResponseRedirect('/project/')
